@@ -43,19 +43,18 @@ public class ImageService {
         List<String> imageList = new ArrayList();
         File folder = new File(BASE_PATH+cameraId);
         File[] listOfFiles = folder.listFiles();
-
+        Arrays.sort(listOfFiles);
         for (int i = 0; i < listOfFiles.length; i++) {
             if (listOfFiles[i].isFile()) {
                 imageList.add(BASE_URL+cameraId+"/"+listOfFiles[i].getName());
-                System.out.println(folder.getAbsolutePath()+listOfFiles[i].getName());
             }
         }
         return imageList;
     }
 
-    public static void main(String[] args){
-        ImageService service = new ImageService();
-        List<String> items = service.getImages(CAMERA_1);
-        items.forEach(item->System.out.println(item));
-    }
+//    public static void main(String[] args){
+//        ImageService service = new ImageService();
+//        List<String> items = service.getImages(CAMERA_1);
+//        items.forEach(item->System.out.println(item));
+//    }
 }

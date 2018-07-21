@@ -1,5 +1,6 @@
 package ai.zyp.controller;
 
+import ai.zyp.domain.CameraImage;
 import ai.zyp.domain.Order;
 import ai.zyp.service.ImageService;
 import ai.zyp.service.OrderService;
@@ -22,15 +23,24 @@ public class ImageController {
 
 
     @RequestMapping(method = RequestMethod.GET)
-    public Map<String,List<String>> getImages() {
-
-        return imageService.getImages();
-
+    public List<CameraImage> getImages() {
+        List<CameraImage> imageList = new ArrayList<>();
+        Map<String,List<String>> imageMap = imageService.getImages();
+        imageMap.forEach((k,v) -> {
+            CameraImage image = new CameraImage();
+            image.setCameraId(k);
+            image.setImages(v);
+            imageList.add(image);
+        });
+        return imageList;
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public List<String> getOrderImages(@PathVariable("id") String id) {
-        return imageService.getImages(id);
+    public CameraImage getOrderImages(@PathVariable("id") String id) {
+        CameraImage image = new CameraImage();
+        image.setCameraId(id);
+        image.setImages(imageService.getImages(id));
+        return image;
     }
 
 }

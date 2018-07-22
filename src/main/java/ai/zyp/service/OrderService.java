@@ -1,7 +1,9 @@
 package ai.zyp.service;
 
+import ai.zyp.DAO.Redis;
 import ai.zyp.domain.Order;
-import ai.zyp.domain.OrderItem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -11,90 +13,45 @@ import java.util.*;
 
 public class OrderService {
 
-    private Map<Long,Order> orders;
-
+    private Redis db;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public OrderService(){
-        this.orders = buildOrders();
+        db = new Redis("localhost", Integer.parseInt("0"));
     }
 
     public List<Order> getVerifyOrders() {
-        return new ArrayList<Order>(orders.values());
-    }
+        List<Order> orders = new ArrayList();
 
-    public List<OrderItem> getOrderItems(Long orderId){
-        Order order = orders.get(orderId);
-        return order.getOrderItems();
-    }
-
-    public Order getOrder(Long orderId){
-        return orders.get(orderId);
-    }
-
-    public void updateOrder(Order order){
-        Order oldOrder = orders.remove(order.getOrderId());
-        orders.put(order.getOrderId(),order);
-    }
-
-    private Map<Long,Order> buildOrders() {
-        Map<Long,Order> orders = new HashMap();
-        Date today = new Date();
-
-        OrderItem item1 = new OrderItem(1L,"Chips",1);
-        OrderItem item2 = new OrderItem(2L,"Cocacola",1);
-        OrderItem item3 = new OrderItem(3L,"Orange juice",1);
-        OrderItem item4 = new OrderItem(4L,"Sprite",1);
-        OrderItem item5 = new OrderItem(5L,"Milk",1);
-        OrderItem item6 = new OrderItem(6L,"Fanta",1);
-        OrderItem item7 = new OrderItem(7L,"Cheese",1);
-        OrderItem item8 = new OrderItem(8L,"Apple",1);
-        OrderItem item9 = new OrderItem(9L,"Icecream",1);
-        OrderItem item10 = new OrderItem(10L,"Chocolate",1);
-        OrderItem item11 = new OrderItem(11L,"Yogurt",1);
-
-        List<OrderItem> items = new ArrayList<>();
-        items.add(item1);
-        items.add(item2);
-        items.add(item11);
-
-        Order od1 = buildOrder(1L, today, 49L, items);
-        items = new ArrayList<>();
-        items.add(item3);
-        items.add(item4);
-        items.add(item1);
-
-        Order od2 = buildOrder(2L, today, 39L, items);
-        items = new ArrayList<>();
-        items.add(item5);
-        items.add(item6);
-        items.add(item7);
-        items.add(item8);
-
-        Order od3 = buildOrder(3L, today, 29L, items);
-        items = new ArrayList<>();
-        items.add(item9);
-        items.add(item10);
-        items.add(item3);
-        items.add(item5);
-
-        Order od4 = buildOrder(4L, today,19L, items);
-
-        orders.put(od1.getOrderId(),od1);
-        orders.put(od2.getOrderId(),od2);
-        orders.put(od3.getOrderId(),od3);
-        orders.put(od4.getOrderId(),od4);
-
+        List<String> keys = db.getMatchingKeys("order-v2::"+"*",10000);
+        logger.debug("Number of orders = "+keys.size());
+        keys.forEach(key ->{
+            orders.add(getOrder(key.replaceFirst("order-v2::","")));
+        });
         return orders;
-
     }
 
-    private Order buildOrder(Long orderId, Date orderDate, Long customerId, List<OrderItem> orderItems) {
-        Order order = new Order();
-        order.setOrderId(orderId);
-        order.setOrderDate(Order._DATE_FORMAT.format(orderDate));
-        order.setCustomerId(customerId);
-        order.setOrderItems(orderItems);
+    public Order getOrder(String orderId){
+        Order order = null;
+        logger.debug("getOrder() called with orderId = "+orderId);
+        Map<String,String> orderMap = (Map<String,String>)db.fetchData("order-v2::"+orderId,"Map");
+        if(orderMap !=null){
+            if(orderMap.get("status").equals("verify")){
+                order = new Order(orderId,orderMap);
+            }
+        }else{
+            logger.error("No order details fetched from DB for orderId "+orderId);
+        }
         return order;
     }
 
+    public void updateOrder(Order order){
+
+    }
+
+    public static void main(String[] args) {
+        OrderService service = new OrderService();
+        List<Order> orders = service.getVerifyOrders();
+        orders.forEach(order-> System.out.println(order.getCustomerId()));
+    }
 }

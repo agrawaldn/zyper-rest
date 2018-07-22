@@ -28,7 +28,7 @@ public class OrderController {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public Order getOrder(@PathVariable("id") Long id) {
+    public Order getOrder(@PathVariable("id") String id) {
         return service.getOrder(id);
     }
 

@@ -1,7 +1,9 @@
 package ai.zyp.service;
 
-import ai.zyp.domain.OrderImage;
-import java.io.File;
+import ai.zyp.DAO.Redis;
+import ai.zyp.domain.Order;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.*;
 
 /**
@@ -10,51 +12,49 @@ import java.util.*;
 
 
 public class ImageService {
-    public static String BASE_PATH = "/home/devendra/apache/camera/";
-    public static String BASE_URL = "http://localhost/camera/";
-    public static String CAMERA_1 = "728312070375";
-    public static String CAMERA_2 = "745212070402";
-    public static String CAMERA_3 = "752112070219";
-    public static String CAMERA_4 = "819112072121";
-    OrderImage orderImage;
+
+    private Redis db;
+    private OrderService orderService;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public ImageService(){
-        orderImage = new OrderImage();
-        buildData();
+        db = new Redis("localhost", Integer.parseInt("0"));
+        orderService = new OrderService();
     }
 
-    public List<String> getImages(String cameraId) {
-        return orderImage.getImageList(cameraId);
+
+    public Map<String,List<String>> getImages(String orderId) {
+        Map<String,List<String>> ret = new HashMap();
+        Order order = orderService.getOrder(orderId);
+        List<String> cameraKeyList = db.getMatchingKeys("cam-v2::*",50);
+        logger.debug("Number of cameras returned = "+cameraKeyList.size());
+        cameraKeyList.forEach(key->{
+            Map<String,String> camConfigMap = (Map<String,String>) db.fetchData(key,"Map");
+            String urlTemplate = camConfigMap.get("url_template");
+            String cameraId = camConfigMap.get("serial");
+            Set<String> imageTimestampSet = db.zrangeByScore("frame::"+cameraId,
+                    Long.valueOf(order.getStartTime()),
+                    Long.valueOf(order.getEndTime()),10000);
+            logger.debug("Number of images returned for "+cameraId+" = "+imageTimestampSet.size());
+            List<String> urlList = new ArrayList();
+            imageTimestampSet.forEach(ts->{
+                String arr[] = ts.split(":");
+                String secs = arr[0];
+                String msecs = arr[1];
+                String url = urlTemplate.replaceFirst("\\{secs\\}",secs).replaceFirst("\\{msecs\\}",msecs);
+                logger.debug("Added image at = "+url);
+                urlList.add(url);
+            });
+            ret.put(cameraId, urlList);
+        });
+
+        return ret;
     }
 
-    public Map<String,List<String>> getImages() {
-        return orderImage.getImageMap();
+    public static void main(String[] args){
+        ImageService service = new ImageService();
+        Map<String,List<String>> items = service.getImages("o-d5d30429-5ac0-4c05-8d5a-f7bc2fd5f75f");
+        System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX "+items.size());
+        items.forEach((k,v)->System.out.println("cameraId = "+k+" image count = "+v.size()));
     }
-    private void buildData() {
-
-        orderImage.putImageList(CAMERA_1,buildData(CAMERA_1));
-        orderImage.putImageList(CAMERA_2,buildData(CAMERA_2));
-        orderImage.putImageList(CAMERA_3,buildData(CAMERA_3));
-        orderImage.putImageList(CAMERA_4,buildData(CAMERA_4));
-
-    }
-
-    private List<String> buildData(String cameraId){
-        List<String> imageList = new ArrayList();
-        File folder = new File(BASE_PATH+cameraId);
-        File[] listOfFiles = folder.listFiles();
-        Arrays.sort(listOfFiles);
-        for (int i = 0; i < listOfFiles.length; i++) {
-            if (listOfFiles[i].isFile()) {
-                imageList.add(BASE_URL+cameraId+"/"+listOfFiles[i].getName());
-            }
-        }
-        return imageList;
-    }
-
-//    public static void main(String[] args){
-//        ImageService service = new ImageService();
-//        List<String> items = service.getImages(CAMERA_1);
-//        items.forEach(item->System.out.println(item));
-//    }
 }

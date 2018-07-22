@@ -22,10 +22,10 @@ public class ImageController {
     ImageService imageService = new ImageService();
 
 
-    @RequestMapping(method = RequestMethod.GET)
-    public List<CameraImage> getImages() {
+    @RequestMapping(value = "/{id}",method = RequestMethod.GET)
+    public List<CameraImage> getImages(@PathVariable("id") String id) {
         List<CameraImage> imageList = new ArrayList<>();
-        Map<String,List<String>> imageMap = imageService.getImages();
+        Map<String,List<String>> imageMap = imageService.getImages(id);
         imageMap.forEach((k,v) -> {
             CameraImage image = new CameraImage();
             image.setCameraId(k);
@@ -33,14 +33,6 @@ public class ImageController {
             imageList.add(image);
         });
         return imageList;
-    }
-
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public CameraImage getOrderImages(@PathVariable("id") String id) {
-        CameraImage image = new CameraImage();
-        image.setCameraId(id);
-        image.setImages(imageService.getImages(id));
-        return image;
     }
 
 }

@@ -2,6 +2,7 @@ package ai.zyp.domain;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +19,8 @@ public class Order {
     private String endTime;
     private String status;
     private double paid;
+    private String orderDate;
+
 
     private List<OrderItem> orderItems;
 
@@ -37,7 +40,7 @@ public class Order {
                 break;
                 default:
                     if(k.startsWith("prod::")){
-                        this.addOrderItem(new OrderItem(v,k.replaceFirst("prod::","")));
+                        this.addOrderItem(new OrderItem(v,k.replaceFirst("prod::",""),1));
                     }
             }
 
@@ -66,6 +69,8 @@ public class Order {
 
     public void setEndTime(String endTime) {
         this.endTime = endTime;
+        Date date = new Date(Long.valueOf(endTime));
+        this.setOrderDate(Order._DATE_FORMAT.format(date));
     }
 
     public String getOrderId() {
@@ -99,11 +104,33 @@ public class Order {
     public void setOrderItems(List<OrderItem> orderItems) {
         this.orderItems = orderItems;
     }
+
+    public String getOrderDate() {
+        return orderDate;
+    }
+
+    public void setOrderDate(String orderDate) {
+        this.orderDate = orderDate;
+    }
+
     public void addOrderItem(OrderItem orderItem) {
         if(this.orderItems == null){
             orderItems = new ArrayList<OrderItem>();
+            orderItems.add(orderItem);
+        }else {
+            boolean alreadyExists = false;
+            //this.getOrderItems().forEach(item ->{
+            for(int i=0;i<this.getOrderItems().size();i++){
+                OrderItem item = this.getOrderItems().get(i);
+                if(item.equals(orderItem)){
+                    item.addQuantity(orderItem.getQuantity());
+                    alreadyExists = true;
+                }
+            }
+            if(!alreadyExists){
+                orderItems.add(orderItem);
+            }
         }
-        orderItems.add(orderItem);
     }
 
 }

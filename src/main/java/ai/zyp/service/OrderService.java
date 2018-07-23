@@ -46,7 +46,14 @@ public class OrderService {
     }
 
     public void updateOrder(Order order){
-
+        Map<String,String> orderItemMap = new HashMap();
+        order.getOrderItems().forEach(item->{
+            for(int i=0;i<item.getQuantity();i++){
+                orderItemMap.put("prod::"+item.getProductDesc(),item.getProductId());
+                orderItemMap.put("customer_id",order.getCustomerId());
+            }
+        });
+        db.saveData("order-v2::"+order.getOrderId(),orderItemMap,"Map");
     }
 
     public static void main(String[] args) {

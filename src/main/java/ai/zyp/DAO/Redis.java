@@ -9,10 +9,7 @@ import redis.clients.jedis.ScanParams;
 import redis.clients.jedis.ScanResult;
 import redis.clients.jedis.exceptions.JedisException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static redis.clients.jedis.ScanParams.SCAN_POINTER_START;
@@ -23,10 +20,10 @@ import static redis.clients.jedis.ScanParams.SCAN_POINTER_START;
 
 public class Redis {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private static JedisPool pool = null;
+    //private static JedisPool pool = null;
 
     public Redis(String host, int port){
-        pool = new JedisPool(host);
+        //pool = new JedisPool(host);
         Jedis jedis = this.getConnection();
         String res = "";
         try {
@@ -34,12 +31,12 @@ public class Redis {
         }catch (JedisException e) {
             logger.error(e.getMessage(),e);
             if (null != jedis) {
-                pool.returnBrokenResource(jedis);
-                jedis = null;
-            }
+                jedis.close();
+                jedis = null;            }
         } finally {
             if (null != jedis)
-                pool.returnResource(jedis);
+                jedis.close();
+            jedis = null;
         }
         if(res.equals("PONG")) {
             logger.debug("Redis Server is running");
@@ -49,7 +46,8 @@ public class Redis {
     }
 
     private Jedis getConnection(){
-        return pool.getResource();
+        //return pool.getResource();
+        return new Jedis();
     }
 
     public void saveData(String key, Object value, String dataType){
@@ -72,12 +70,32 @@ public class Redis {
         }catch (JedisException e) {
             logger.error(e.getMessage(),e);
             if (null != jedis) {
-                pool.returnBrokenResource(jedis);
-                jedis = null;
-            }
+                jedis.close();
+                jedis = null;            }
         } finally {
             if (null != jedis)
-                pool.returnResource(jedis);
+                jedis.close();
+            jedis = null;
+        }
+    }
+
+    public void deleteDataFromHash(String key, Set<String> fields) {
+        Jedis jedis = this.getConnection();
+        try {
+            Iterator<String> itr = fields.iterator();
+            while (itr.hasNext()) {
+                jedis.hdel(key, itr.next());
+            }
+        } catch (JedisException e) {
+            logger.error(e.getMessage(), e);
+            if (null != jedis) {
+                jedis.close();
+                jedis = null;            }
+        } finally {
+            if (null != jedis) {
+                jedis.close();
+                jedis = null;
+            }
         }
     }
 
@@ -103,14 +121,33 @@ public class Redis {
         }catch (JedisException e) {
             logger.error(e.getMessage(),e);
             if (null != jedis) {
-                pool.returnBrokenResource(jedis);
+                jedis.close();
                 jedis = null;
             }
         } finally {
-            if (null != jedis)
-                pool.returnResource(jedis);
+            if (null != jedis) {
+                jedis.close();
+                jedis = null;
+            }
         }
         return ret;
+    }
+
+    public void updateData(String key, String field, String value){
+        Jedis jedis = this.getConnection();
+        try {
+            jedis.hset(key,field,value);
+        }catch (JedisException e) {
+            logger.error(e.getMessage(),e);
+            if (null != jedis) {
+                jedis.close();
+                jedis = null;            }
+        } finally {
+            if (null != jedis) {
+                jedis.close();
+                jedis = null;
+            }
+        }
     }
 
     public void saveList(String key, List<String> values){
@@ -146,11 +183,11 @@ public class Redis {
         } catch (Exception e) {
             logger.error(e.getMessage(),e);
             success = false;
-            logger.error(e.getMessage(),e);
         } finally {
-            if (null != jedis)
-                pool.returnResource(jedis);
-
+            if (null != jedis) {
+                jedis.close();
+                jedis = null;
+            }
         }
         return ret;
     }

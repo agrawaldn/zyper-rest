@@ -9,6 +9,12 @@ public class OrderItem {
     private String productId;
     private int quantity;
 
+    public OrderItem(String productId, String product, int qty){
+        this.productDesc = product;
+        this.productId = productId;
+        this.quantity = qty;
+    }
+
     public int getQuantity() {
         return quantity;
     }
@@ -19,12 +25,6 @@ public class OrderItem {
 
     public void addQuantity(int quantity) {
         this.quantity = this.quantity+quantity;
-    }
-
-    public OrderItem(String productId, String product, int qty){
-        this.productDesc = product;
-        this.productId = productId;
-        this.quantity = qty;
     }
 
     public String getProductId() {

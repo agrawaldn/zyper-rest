@@ -25,7 +25,7 @@ public class ImageService {
 
     public Map<String,List<String>> getImages(String orderId) {
         Map<String,List<String>> ret = new HashMap();
-        Order order = orderService.getOrder(orderId);
+        Order order = orderService.getOrder(orderId,null, false);
         List<String> cameraKeyList = db.getMatchingKeys("cam-v2::*",50);
         logger.debug("Number of cameras returned = "+cameraKeyList.size());
         cameraKeyList.forEach(key->{

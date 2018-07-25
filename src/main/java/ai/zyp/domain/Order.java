@@ -21,32 +21,12 @@ public class Order {
     private double paid;
     private String orderDate;
 
-
     private List<OrderItem> orderItems;
 
-    public Order(String orderId, Map<String,String> inputMap){
-        this.setOrderId(orderId);
-        inputMap.forEach((k,v)->{
-            switch (k){
-                case "customer_id": this.setCustomerId(v);
-                break;
-                case "status": this.setStatus(v);
-                break;
-                case "start": this.setStartTime(v);
-                break;
-                case "end": this.setEndTime(v);
-                break;
-                case "Paid": this.setPaid(Double.parseDouble(v));
-                break;
-                default:
-                    if(k.startsWith("prod::")){
-                        this.addOrderItem(new OrderItem(v,k.replaceFirst("prod::",""),1));
-                    }
-            }
-
-        });
+    public Order(){
+        orderItems = new ArrayList<OrderItem>();
+        orderItems.add(new OrderItem("","",0));
     }
-
     public String getStatus() {
         return status;
     }
@@ -113,13 +93,21 @@ public class Order {
         this.orderDate = orderDate;
     }
 
+    public void updateProdQuantity(String prod, int qty){
+        this.getOrderItems().forEach(item ->{
+            if(item.getProductDesc().equals(prod)){
+                item.setQuantity(qty);
+            }
+        });
+    }
+
     public void addOrderItem(OrderItem orderItem) {
-        if(this.orderItems == null){
-            orderItems = new ArrayList<OrderItem>();
-            orderItems.add(orderItem);
+        if(this.getOrderItems() == null){
+            List<OrderItem> items = new ArrayList<OrderItem>();
+            items.add(orderItem);
+            this.setOrderItems(items);
         }else {
             boolean alreadyExists = false;
-            //this.getOrderItems().forEach(item ->{
             for(int i=0;i<this.getOrderItems().size();i++){
                 OrderItem item = this.getOrderItems().get(i);
                 if(item.equals(orderItem)){
@@ -128,9 +116,19 @@ public class Order {
                 }
             }
             if(!alreadyExists){
-                orderItems.add(orderItem);
+                this.getOrderItems().add(orderItem);
             }
         }
+    }
+
+    public String toString(){
+        StringBuffer ret = new StringBuffer();
+        ret.append(" Customer ID: "+getCustomerId());
+        ret.append(" Status: "+getStatus());
+        this.getOrderItems().forEach(item->{
+            ret.append(" Product: "+item.getProductDesc()+" Quantity: "+item.getQuantity());
+        });
+        return ret.toString();
     }
 
 }

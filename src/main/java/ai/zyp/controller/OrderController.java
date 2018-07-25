@@ -3,6 +3,8 @@ package ai.zyp.controller;
 import ai.zyp.domain.Order;
 import ai.zyp.domain.OrderItem;
 import ai.zyp.service.OrderService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/orders")
 public class OrderController {
-
+        private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private OrderService service;
 
@@ -29,12 +31,13 @@ public class OrderController {
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
     public Order getOrder(@PathVariable("id") String id) {
-        return service.getOrder(id);
+        return service.getOrder(id,null, false);
     }
 
     @RequestMapping(method = RequestMethod.PUT)
-    public Order updateOrder(@RequestBody Order order) {
-        service.updateOrder(order);
+    public Order saveVerifiedOrder(@RequestBody Order order) {
+        logger.debug("PUT request received for order "+order.toString());
+        service.saveVerifiedOrder(order);
         return order;
     }
 

@@ -22,6 +22,15 @@ public class Order {
     private String orderDate;
 
     private List<OrderItem> orderItems;
+    private List<OrderEvent> orderEvents;
+
+    public List<OrderEvent> getOrderEvents() {
+        return orderEvents;
+    }
+
+    public void setOrderEvents(List<OrderEvent> orderEvents) {
+        this.orderEvents = orderEvents;
+    }
 
     public Order(){
         orderItems = new ArrayList<OrderItem>();

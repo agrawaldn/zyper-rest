@@ -49,6 +49,21 @@ public class Redis {
         //return pool.getResource();
         return new Jedis();
     }
+    public void insertData(String key, String field, String value){
+        Jedis jedis = this.getConnection();
+        try {
+            jedis.hset(key, field, value );
+        }catch (JedisException e) {
+            logger.error(e.getMessage(),e);
+            if (null != jedis) {
+                jedis.close();
+                jedis = null;            }
+        } finally {
+            if (null != jedis)
+                jedis.close();
+            jedis = null;
+        }
+    }
 
     public void saveData(String key, Object value, String dataType){
         Jedis jedis = this.getConnection();

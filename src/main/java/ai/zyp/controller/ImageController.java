@@ -24,15 +24,7 @@ public class ImageController {
 
     @RequestMapping(value = "/{id}",method = RequestMethod.GET)
     public List<CameraImage> getImages(@PathVariable("id") String id) {
-        List<CameraImage> imageList = new ArrayList<>();
-        Map<String,List<String>> imageMap = imageService.getImages(id);
-        imageMap.forEach((k,v) -> {
-            CameraImage image = new CameraImage();
-            image.setCameraId(k);
-            image.setImages(v);
-            imageList.add(image);
-        });
-        return imageList;
+        return imageService.getImages(id);
     }
 
 }

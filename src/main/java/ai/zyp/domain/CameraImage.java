@@ -7,8 +7,16 @@ import java.util.List;
  */
 public class CameraImage {
     private String cameraId;
-    private List<String> images;
-    
+    private List<ImageDetail> imageDetails;
+
+    public List<ImageDetail> getImageDetails() {
+        return imageDetails;
+    }
+
+    public void setImageDetails(List<ImageDetail> imageDetails) {
+        this.imageDetails = imageDetails;
+    }
+
     public String getCameraId() {
         return cameraId;
     }
@@ -16,16 +24,5 @@ public class CameraImage {
     public void setCameraId(String cameraId) {
         this.cameraId = cameraId;
     }
-
-    public List<String> getImages() {
-        return images;
-    }
-
-    public void setImages(List<String> images) {
-        this.images = images;
-    }
-
-
-
 
 }

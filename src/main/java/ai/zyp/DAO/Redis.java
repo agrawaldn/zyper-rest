@@ -2,9 +2,8 @@ package ai.zyp.DAO;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.ScanParams;
 import redis.clients.jedis.ScanResult;
 import redis.clients.jedis.exceptions.JedisException;
@@ -20,10 +19,16 @@ import static redis.clients.jedis.ScanParams.SCAN_POINTER_START;
 
 public class Redis {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    //private static JedisPool pool = null;
 
-    public Redis(String host, int port){
-        //pool = new JedisPool(host);
+    @Value( "${database.host}" )
+    private String databaseHost="localhost";
+
+    @Value( "${database.index}" )
+    private String databaseIndex="0";
+
+
+    public Redis(){
+
         Jedis jedis = this.getConnection();
         String res = "";
         try {
@@ -39,15 +44,16 @@ public class Redis {
             jedis = null;
         }
         if(res.equals("PONG")) {
-            logger.debug("Redis Server is running");
+            logger.debug("Connected to database at "+databaseHost);
         }else{
-            logger.error("Can't connect to Redis server");
+            logger.error("Can't connect to database server");
         }
     }
 
     private Jedis getConnection(){
-        //return pool.getResource();
-        return new Jedis();
+        Jedis jedis = new Jedis(databaseHost);
+        jedis.select(Integer.parseInt(databaseIndex));
+        return jedis;
     }
     public void insertData(String key, String field, String value){
         Jedis jedis = this.getConnection();
@@ -209,7 +215,7 @@ public class Redis {
 
     public static void main(String[] args) {
 
-        Redis redis = new Redis("localhost", 0);
+        Redis redis = new Redis();
         Set<String> set = redis.zrangeByScore("frame::819112072121",1531352509986L,1531352510476L,1000);
         set.forEach(s->{
             System.out.println(s);

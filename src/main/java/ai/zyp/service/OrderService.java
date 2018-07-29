@@ -19,7 +19,7 @@ public class OrderService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public OrderService() {
-        db = new Redis("localhost", Integer.parseInt("0"));
+        db = new Redis();
     }
 
     public List<Order> getVerifyOrders() {

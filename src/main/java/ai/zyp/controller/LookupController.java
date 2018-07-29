@@ -2,6 +2,7 @@ package ai.zyp.controller;
 
 import ai.zyp.domain.Order;
 import ai.zyp.domain.Product;
+import ai.zyp.domain.Shelf;
 import ai.zyp.service.LookupService;
 import ai.zyp.service.OrderService;
 import org.slf4j.Logger;
@@ -26,6 +27,9 @@ public class LookupController {
         return service.getAllProducts();
     }
 
-
+    @RequestMapping(value = "shelf",method = RequestMethod.GET)
+    public List<Shelf> getShelves() {
+        return service.getAllShelves();
+    }
 
 }

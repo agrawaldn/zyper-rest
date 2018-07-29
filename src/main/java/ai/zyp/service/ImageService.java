@@ -20,7 +20,7 @@ public class ImageService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public ImageService(){
-        db = new Redis("localhost", Integer.parseInt("0"));
+        db = new Redis();
         orderService = new OrderService();
     }
 

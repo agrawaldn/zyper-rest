@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration debug="true" scan="true" scanPeriod="30 seconds">
-    <property name="LOG_PATH" value="/home/devendra/logs" />
+    <property name="LOG_PATH" value="${catalina.base}/logs/" />
     <property name="LOG_ARCHIVE" value="${LOG_PATH}/archive" />
     <timestamp key="timestamp-by-second" datePattern="yyyyMMdd'T'HHmmss"/>
     <timestamp key="timestamp-by-day" datePattern="yyyyMMdd'T'HHmmss"/>
@@ -36,6 +36,6 @@
         <appender-ref ref="Async-Appender" />
     </logger>
     <root>
-        <appender-ref ref="Console-Appender" />
+        <!--<appender-ref ref="Console-Appender" />-->
     </root>
 </configuration>

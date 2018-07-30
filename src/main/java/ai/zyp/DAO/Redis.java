@@ -1,8 +1,8 @@
 package ai.zyp.DAO;
 
+import ai.zyp.conf.DBProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.ScanParams;
 import redis.clients.jedis.ScanResult;
@@ -19,13 +19,6 @@ import static redis.clients.jedis.ScanParams.SCAN_POINTER_START;
 
 public class Redis {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    @Value( "${database.host}" )
-    private String databaseHost="localhost";
-
-    @Value( "${database.index}" )
-    private String databaseIndex="0";
-
 
     public Redis(){
 
@@ -44,15 +37,18 @@ public class Redis {
             jedis = null;
         }
         if(res.equals("PONG")) {
-            logger.debug("Connected to database at "+databaseHost);
+            logger.debug("Connected to database at "+DBProperties.getInstance().getHost());
         }else{
-            logger.error("Can't connect to database server");
+            logger.error("Can't connect to database server"+DBProperties.getInstance().getHost());
         }
     }
 
     private Jedis getConnection(){
-        Jedis jedis = new Jedis(databaseHost);
-        jedis.select(Integer.parseInt(databaseIndex));
+        Jedis jedis = new Jedis(DBProperties.getInstance().getHost());
+        String idx = DBProperties.getInstance().getIndex();
+        if(null!= idx && !idx.isEmpty()) {
+            jedis.select(Integer.parseInt(idx));
+        }
         return jedis;
     }
     public void insertData(String key, String field, String value){
@@ -187,6 +183,7 @@ public class Redis {
             ret.addAll(scanResult.getResult().stream().collect(Collectors.toList()));
             cur = scanResult.getStringCursor();
         } while (!cur.equals(SCAN_POINTER_START));
+        //Collections.sort(ret);
         return ret;
     }
 

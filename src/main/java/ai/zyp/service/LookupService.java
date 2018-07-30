@@ -25,6 +25,7 @@ public class LookupService {
         List<Product> products = new ArrayList();
 
         List<String> keys = db.getMatchingKeys("prod::" + "*", 1000);
+        Collections.sort(keys);
         logger.debug("Number of products in lookup = " + keys.size());
         keys.forEach(key -> {
             Map<String, String> prodMap = (Map<String, String>)db.fetchData(key, "Map");
@@ -43,6 +44,7 @@ public class LookupService {
         List<Shelf> shelves = new ArrayList();
 
         List<String> keys = db.getMatchingKeys("shelf-v2::" + "*", 1000);
+        Collections.sort(keys);
         logger.debug("Number of shelves loaded = " + keys.size());
         keys.forEach(key -> {
             Map<String, String> shelfMap = (Map<String, String>)db.fetchData(key, "Map");

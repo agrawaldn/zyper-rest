@@ -1,5 +1,9 @@
 package ai.zyp.domain;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by Dev Agrawal on 7/27/18.
  */
@@ -90,7 +94,15 @@ public class OrderEvent {
     }
 
     public String getEpochTimestamp(){
-        return timestamp;
+        if(timestamp == null) return null;
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+            Date dt = sdf.parse(timestamp);
+            long epoch = dt.getTime();
+            return String.valueOf(epoch);
+        } catch(ParseException e) {
+            return null;
+        }
     }
 
 

@@ -14,7 +14,8 @@ import java.util.Map;
 /**
  * Created by Dev Agrawal on 7/17/18.
  */
-@CrossOrigin(origins = "http://localhost:4200")
+//@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping(value = "/images")
 public class ImageController {

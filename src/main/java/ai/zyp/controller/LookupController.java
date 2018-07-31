@@ -15,7 +15,8 @@ import java.util.List;
 /**
  * Created by Dev Agrawal on 7/14/18.
  */
-@CrossOrigin(origins = "http://localhost:4200")
+//@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping(value = "/lookup")
 public class LookupController {

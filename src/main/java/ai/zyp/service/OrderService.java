@@ -26,10 +26,14 @@ public class OrderService {
         List<Order> orders = new ArrayList();
 
         List<String> keys = db.getMatchingKeys("order-v2::" + "*", 10000);
-        logger.debug("Number of orders = " + keys.size());
+
         keys.forEach(key -> {
-            orders.add(getOrder(key.replaceFirst("order-v2::", ""), "verify", false));
+            Order order = getOrder(key.replaceFirst("order-v2::", ""), "verify", false);
+            if (null != order){
+                orders.add(order);
+            }
         });
+        logger.debug("Total number of orders in verify status = " + orders.size());
         return orders;
     }
 
@@ -73,7 +77,7 @@ public class OrderService {
 
     public Order getOrder(String orderId, String status, boolean includeItems) {
         Order order = null;
-        logger.debug("getOrder() called with orderId = " + orderId);
+        //logger.debug("getOrder() called with orderId = " + orderId);
         Map<String, String> orderMap = (Map<String, String>)
                 db.fetchData("order-v2::" + orderId, "Map");
         if (orderMap != null) {

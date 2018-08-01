@@ -179,13 +179,26 @@ public class Redis {
         do {
             ScanResult<String> scanResult = jedis.scan(cur, scanParams);
 
-            // add to return list
             ret.addAll(scanResult.getResult().stream().collect(Collectors.toList()));
             cur = scanResult.getStringCursor();
         } while (!cur.equals(SCAN_POINTER_START));
-        //Collections.sort(ret);
         return ret;
     }
+
+//    public List<Map.Entry<String, String>> getMatchingFields(String key, String pattern, int countLimit){
+//        Jedis jedis = this.getConnection();
+//        List<Map.Entry<String, String>> list = new ArrayList<Map.Entry<String, String>>();
+//        ScanParams scanParams = new ScanParams().count(countLimit).match(pattern);
+//        String cur = SCAN_POINTER_START;
+//        do {
+//            ScanResult<Map.Entry<String,String>> scanResult =
+//                    jedis.hscan(key, cur, scanParams);
+//
+//            list.addAll(scanResult.getResult());
+//            cur = scanResult.getStringCursor();
+//        } while (!cur.equals(SCAN_POINTER_START));
+//        return list;
+//    }
 
     public Set<String> zrangeByScore(String key, long min, long max, int limit) {
         Jedis jedis = null;
@@ -210,12 +223,12 @@ public class Redis {
         return ret;
     }
 
-    public static void main(String[] args) {
-
-        Redis redis = new Redis();
-        Set<String> set = redis.zrangeByScore("frame::819112072121",1531352509986L,1531352510476L,1000);
-        set.forEach(s->{
-            System.out.println(s);
-        });
-    }
+//    public static void main(String[] args) {
+//
+//        Redis redis = new Redis();
+//        List<Map.Entry<String, String>> list = redis.getMatchingFields("order-v2::o-07c26f2e-e4f5-45e5-b936-7a86d1668d11","verify", 1000);
+//        list.forEach(entry->{
+//            System.out.println("(k,v) =>"+entry.getKey()+","+entry.getValue());
+//        });
+//    }
 }

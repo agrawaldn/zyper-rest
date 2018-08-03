@@ -4,6 +4,7 @@ import ai.zyp.DAO.Redis;
 import ai.zyp.domain.Order;
 import ai.zyp.domain.OrderEvent;
 import ai.zyp.domain.OrderItem;
+import ai.zyp.domain.OrderSortByStartTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ public class OrderService {
                 orders.add(order);
             }
         });
+        Collections.sort(orders,new OrderSortByStartTime());
         logger.debug("Total number of orders in verify status = " + orders.size());
         return orders;
     }
@@ -115,14 +117,16 @@ public class OrderService {
         String eventIdString = "";
         while (itr.hasNext()) {
             OrderEvent e = itr.next();
-            generateItemMap(saveMap, e, fieldPrefix);
+            if(null!= e) {
+                generateItemMap(saveMap, e, fieldPrefix);
 
-            String eventId = UUID.randomUUID().toString();
-            saveEvent(fieldPrefix + "event-v2::" + eventId, e);
-            if (eventIdString.isEmpty()) {
-                eventIdString = eventIdString + eventId;
-            } else {
-                eventIdString = eventIdString + "," + eventId;
+                String eventId = UUID.randomUUID().toString();
+                saveEvent(fieldPrefix + "event-v2::" + eventId, e);
+                if (eventIdString.isEmpty()) {
+                    eventIdString = eventIdString + eventId;
+                } else {
+                    eventIdString = eventIdString + "," + eventId;
+                }
             }
 
         }
@@ -135,8 +139,10 @@ public class OrderService {
 
         Map<String, String> saveMap = new HashMap<String,String>();
         //db.insertData(key,"camera",e.getCamera() );
-        saveMap.put("camera", e.getCamera());
-        saveMap.put("timestamp", e.getEpochTimestamp());
+        if(null != e.getCamera())
+            saveMap.put("camera", e.getCamera());
+        if(null!=e.getEpochTimestamp())
+            saveMap.put("timestamp", e.getEpochTimestamp());
         if(null!=e.getMovements())
             saveMap.put("movements", e.getMovements());
         if(null!=e.getLproductAdded())
@@ -151,6 +157,10 @@ public class OrderService {
             saveMap.put("r_prod_remove", e.getRproductRemoved());
         if(e.getRproductQuantity()>0)
             saveMap.put("r_qty", e.getRproductQuantity() + "");
+        if(null!=e.getLshelf())
+            saveMap.put("l_shelf",e.getLshelf());
+        if(null!=e.getRshelf())
+            saveMap.put("r_shelf",e.getRshelf());
         //logger.debug("saveEvent() called with key = "+key+" value = "+saveMap.toString());
         db.saveData(key,saveMap,"Map");
     }

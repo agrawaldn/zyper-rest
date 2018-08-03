@@ -1,6 +1,6 @@
 package ai.zyp.DAO;
 
-import ai.zyp.conf.DBProperties;
+import ai.zyp.conf.AppProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -37,15 +37,15 @@ public class Redis {
             jedis = null;
         }
         if(res.equals("PONG")) {
-            logger.debug("Connected to database at "+DBProperties.getInstance().getHost());
+            logger.debug("Connected to database at "+ AppProperties.getInstance().getHost());
         }else{
-            logger.error("Can't connect to database server"+DBProperties.getInstance().getHost());
+            logger.error("Can't connect to database server"+ AppProperties.getInstance().getHost());
         }
     }
 
     private Jedis getConnection(){
-        Jedis jedis = new Jedis(DBProperties.getInstance().getHost());
-        String idx = DBProperties.getInstance().getIndex();
+        Jedis jedis = new Jedis(AppProperties.getInstance().getHost());
+        String idx = AppProperties.getInstance().getIndex();
         if(null!= idx && !idx.isEmpty()) {
             jedis.select(Integer.parseInt(idx));
         }
@@ -103,6 +103,23 @@ public class Redis {
             while (itr.hasNext()) {
                 jedis.hdel(key, itr.next());
             }
+        } catch (JedisException e) {
+            logger.error(e.getMessage(), e);
+            if (null != jedis) {
+                jedis.close();
+                jedis = null;            }
+        } finally {
+            if (null != jedis) {
+                jedis.close();
+                jedis = null;
+            }
+        }
+    }
+
+    public void deleteKey(String key) {
+        Jedis jedis = this.getConnection();
+        try{
+            jedis.del(key);
         } catch (JedisException e) {
             logger.error(e.getMessage(), e);
             if (null != jedis) {

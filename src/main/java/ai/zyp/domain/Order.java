@@ -1,17 +1,16 @@
 package ai.zyp.domain;
 
+import ai.zyp.conf.AppProperties;
+
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Dev Agrawal on 7/14/18.
  */
 public class Order {
 
-    public static SimpleDateFormat _DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
+    //public static SimpleDateFormat _DATE_FORMAT = new SimpleDateFormat();
 
     private String orderId;
     private String customerId;
@@ -58,8 +57,6 @@ public class Order {
 
     public void setEndTime(String endTime) {
         this.endTime = endTime;
-        Date date = new Date(Long.valueOf(endTime));
-        this.setOrderDate(Order._DATE_FORMAT.format(date));
     }
 
     public String getOrderId() {
@@ -84,6 +81,9 @@ public class Order {
 
     public void setStartTime(String startTime) {
         this.startTime = startTime;
+        Date date = new Date(Long.valueOf(this.startTime));
+        SimpleDateFormat df = new SimpleDateFormat(AppProperties.getInstance().getDateTimeFormat());
+        this.setOrderDate(df.format(date));
     }
 
     public List<OrderItem> getOrderItems() {
@@ -132,12 +132,22 @@ public class Order {
 
     public String toString(){
         StringBuffer ret = new StringBuffer();
+        ret.append(" Order ID: "+getOrderId());
         ret.append(" Customer ID: "+getCustomerId());
         ret.append(" Status: "+getStatus());
         this.getOrderItems().forEach(item->{
             ret.append(" Product: "+item.getProductDesc()+" Quantity: "+item.getQuantity());
         });
+        this.getOrderEvents().forEach(event->{
+            ret.append("move: "+event.getMovements()+" lshelf: "+event.getLshelf()+" rshelf: "
+                    +event.getRshelf()+" lprod+: "+event.getLproductAdded()+" rprod+: "
+                    +event.getRproductAdded()+" lprod-: "+event.getLproductRemoved()+" rprod-: "
+                    +event.getRproductRemoved()+" lqty: "+event.getLproductQuantity()+"rqty"
+                    +event.getRproductQuantity());
+        });
         return ret.toString();
     }
 
 }
+
+

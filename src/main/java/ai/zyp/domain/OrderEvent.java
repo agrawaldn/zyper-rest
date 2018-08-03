@@ -1,5 +1,7 @@
 package ai.zyp.domain;
 
+import ai.zyp.conf.AppProperties;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -20,6 +22,8 @@ public class OrderEvent {
     String rproductAdded;
     String rproductRemoved;
     int rproductQuantity;
+    String lshelf;
+    String rshelf;
 
     public String getCamera() {
         return camera;
@@ -93,10 +97,26 @@ public class OrderEvent {
         this.rproductQuantity = rproductQuantity;
     }
 
+    public String getLshelf() {
+        return lshelf;
+    }
+
+    public void setLshelf(String lshelf) {
+        this.lshelf = lshelf;
+    }
+
+    public String getRshelf() {
+        return rshelf;
+    }
+
+    public void setRshelf(String rshelf) {
+        this.rshelf = rshelf;
+    }
+
     public String getEpochTimestamp(){
         if(timestamp == null) return null;
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+            SimpleDateFormat sdf = new SimpleDateFormat(AppProperties.getInstance().getDateTimeFormat());
             Date dt = sdf.parse(timestamp);
             long epoch = dt.getTime();
             return String.valueOf(epoch);

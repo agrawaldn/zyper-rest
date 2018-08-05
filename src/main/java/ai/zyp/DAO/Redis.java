@@ -43,7 +43,7 @@ public class Redis {
         }
     }
 
-    private Jedis getConnection(){
+    public Jedis getConnection(){
         Jedis jedis = new Jedis(AppProperties.getInstance().getHost());
         String idx = AppProperties.getInstance().getIndex();
         if(null!= idx && !idx.isEmpty()) {
@@ -185,7 +185,7 @@ public class Redis {
     }
 
     public void saveList(String key, List<String> values){
-            values.forEach(value -> saveData(key, value, "List"));
+        values.forEach(value -> saveData(key, value, "List"));
     }
 
     public List<String> getMatchingKeys(String pattern, int countLimit){

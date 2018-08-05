@@ -7,6 +7,8 @@ import ai.zyp.domain.OrderItem;
 import ai.zyp.domain.OrderSortByStartTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Transaction;
 
 import java.util.*;
 
@@ -82,9 +84,9 @@ public class OrderService {
         //logger.debug("getOrder() called with orderId = " + orderId);
         Map<String, String> orderMap = (Map<String, String>)
                 db.fetchData("order-v2::" + orderId, "Map");
-        if (orderMap != null) {
+        if (null != orderMap) {
             if (status != null && !status.isEmpty()) {
-                if (orderMap.get("status").equals(status)) {
+                if (orderMap.containsKey("status") && orderMap.get("status").equals(status)) {
                     order = buildOrder(orderId, orderMap, includeItems);
                 }
             } else {
@@ -111,103 +113,109 @@ public class OrderService {
     }
 
     public void saveVerifiedOrder(Order order) {
-        String fieldPrefix = "verified_";
+        String fieldPrefix = "v_";
         Map<String, String> saveMap = new HashMap();
-        Iterator<OrderEvent> itr = order.getOrderEvents().iterator();
-        String eventIdString = "";
-        while (itr.hasNext()) {
-            OrderEvent e = itr.next();
-            if(null!= e) {
-                generateItemMap(saveMap, e, fieldPrefix);
-
-                String eventId = UUID.randomUUID().toString();
-                saveEvent(fieldPrefix + "event-v2::" + eventId, e);
-                if (eventIdString.isEmpty()) {
-                    eventIdString = eventIdString + eventId;
-                } else {
-                    eventIdString = eventIdString + "," + eventId;
+        List<String> logList = new ArrayList();
+        boolean okToVerify = true;
+        //do not update status if there are no events recorder at verification stage
+        if(null!=order.getOrderEvents() && order.getOrderEvents().size()>0) {
+            Iterator<OrderEvent> itr = order.getOrderEvents().iterator();
+            while (itr.hasNext()) {
+                OrderEvent e = itr.next();
+                if (null != e) {
+                    generateItemMap(saveMap, e);
+                    String log =generateVerifiedLog(e);
+                    if(null != log) {
+                        logList.add(log);
+                    }
+                }else{
+                    logger.error("Event null for verification of order: "+order.getOrderId());
+                    okToVerify = false;
                 }
             }
-
+            if(logList.size()==0){
+                logger.error("No annotations were recorded for order: "+order.getOrderId());
+                okToVerify = false;
+            }
+            long epochTime = Calendar.getInstance().getTime().getTime();
+            saveMap.put("verified", epochTime + "");
+            if(okToVerify) {
+                Jedis jedis = db.getConnection();
+                Transaction tran = jedis.multi();
+                tran.hset("order-v2::" + order.getOrderId(),"status","verified");
+                tran.hmset(fieldPrefix + "order-v2::" + order.getOrderId(), saveMap);
+                logList.forEach(value -> tran.lpush(fieldPrefix + "order_log-v2::" + order.getOrderId(), value));
+                tran.exec();
+            }
         }
-        saveMap.put(fieldPrefix + "Events", eventIdString);
-        saveMap.put("status","verified");
-        db.saveData("order-v2::"+order.getOrderId(),saveMap,"Map");
     }
 
-    private void saveEvent(String key, OrderEvent e) {
+    private String generateVerifiedLog(OrderEvent e) {
+        StringBuffer value= new StringBuffer();
 
-        Map<String, String> saveMap = new HashMap<String,String>();
-        //db.insertData(key,"camera",e.getCamera() );
-        if(null != e.getCamera())
-            saveMap.put("camera", e.getCamera());
-        if(null!=e.getEpochTimestamp())
-            saveMap.put("timestamp", e.getEpochTimestamp());
+        if(null != e.getOrigTS())
+            value.append(e.getOrigTS()).append(":");
+        if(null!=e.getCamera())
+            value.append(e.getCamera()).append(":");
+        value.append("-1:-1:-1:-1:-1:-1:-1:-1:(");
         if(null!=e.getMovements())
-            saveMap.put("movements", e.getMovements());
-        if(null!=e.getLproductAdded())
-            saveMap.put("l_prod_add", e.getLproductAdded());
-        if(null!=e.getLproductRemoved())
-            saveMap.put("l_prod_remove", e.getLproductRemoved());
-        if(e.getLproductQuantity() >0)
-            saveMap.put("l_qty", e.getLproductQuantity() + "");
-        if(null!=e.getRproductAdded())
-            saveMap.put("r_prod_add", e.getRproductAdded());
-        if(null!=e.getRproductRemoved())
-            saveMap.put("r_prod_remove", e.getRproductRemoved());
-        if(e.getRproductQuantity()>0)
-            saveMap.put("r_qty", e.getRproductQuantity() + "");
-        if(null!=e.getLshelf())
-            saveMap.put("l_shelf",e.getLshelf());
-        if(null!=e.getRshelf())
-            saveMap.put("r_shelf",e.getRshelf());
-        //logger.debug("saveEvent() called with key = "+key+" value = "+saveMap.toString());
-        db.saveData(key,saveMap,"Map");
+            value.append(e.getMovements()).append(")");
+        if(null!=e.getLproductAdded()) {
+            for(int i = 0;i<e.getLproductQuantity();i++) {
+                value.append(":sku_id"+i+":coords(-1,-1,-1,-1)");
+                value.append(":shelf(").append(e.getLshelf()).append(")");
+            }
+        }
+        if(null!=e.getRproductAdded()) {
+            for(int i = 0;i<e.getRproductQuantity();i++) {
+                value.append(":sku_id"+i+":coords(-1,-1,-1,-1)");
+                value.append(":shelf(").append(e.getRshelf()).append(")");
+            }
+        }
+        if(value.length()<=0)
+            return null;
+        return value.toString();
     }
 
 
 
-    private void generateItemMap(Map<String,String> saveMap, OrderEvent e, String fieldPrefix){
+    private void generateItemMap(Map<String,String> saveMap, OrderEvent e){
         if(null!= e.getLproductAdded() && !e.getLproductAdded().isEmpty()){
-            if(saveMap.containsKey(fieldPrefix+"prod::"+e.getLproductAdded())) {
-                int qty = Integer.parseInt(saveMap.remove(fieldPrefix+"prod::"+e.getLproductAdded()));
+            if(saveMap.containsKey("prod::"+e.getLproductAdded())) {
+                int qty = Integer.parseInt(saveMap.remove("prod::"+e.getLproductAdded()));
                 int sum = qty+e.getLproductQuantity();
-                saveMap.put(fieldPrefix+"qty::",sum+"");
+                saveMap.put("prod::"+e.getLproductAdded(),sum+"");
             }else{
-                //TODO add appropriate value for prod field
-                saveMap.put(fieldPrefix+"prod::"+e.getLproductAdded(),"");
-                saveMap.put(fieldPrefix+"qty::"+e.getLproductAdded(),""+e.getLproductQuantity());
+                saveMap.put("prod::"+e.getLproductAdded(),""+e.getLproductQuantity());
             }
         }
         if(null!= e.getRproductAdded() && !e.getRproductAdded().isEmpty()){
-            if(saveMap.containsKey(fieldPrefix+"qty::"+e.getRproductAdded())) {
-                int qty = Integer.parseInt(saveMap.remove(fieldPrefix+"qty::"+e.getRproductAdded()));
+            if(saveMap.containsKey("prod::"+e.getRproductAdded())) {
+                int qty = Integer.parseInt(saveMap.remove("prod::"+e.getRproductAdded()));
                 int sum = qty+e.getRproductQuantity();
-                saveMap.put(fieldPrefix+"qty::",sum+"");
+                saveMap.put("prod::"+e.getRproductAdded(),sum+"");
             }else{
-                //TODO add appropriate value for prod field
-                saveMap.put(fieldPrefix+"prod::"+e.getRproductAdded(),"");
-                saveMap.put(fieldPrefix+"qty::"+e.getRproductAdded(),""+e.getRproductQuantity());
+                saveMap.put("prod::"+e.getRproductAdded(),""+e.getRproductQuantity());
             }
         }
         if(null!= e.getLproductRemoved() && !e.getLproductRemoved().isEmpty()){
-            if(saveMap.containsKey(fieldPrefix+"qty::"+e.getLproductRemoved())) {
-                int qty = Integer.parseInt(saveMap.remove(fieldPrefix+"qty::"+e.getLproductRemoved()));
+            if(saveMap.containsKey("prod::"+e.getLproductRemoved())) {
+                int qty = Integer.parseInt(saveMap.remove("prod::"+e.getLproductRemoved()));
                 int sum = qty-e.getLproductQuantity();
-                saveMap.put(fieldPrefix+"qty::",sum+"");
+                saveMap.put("prod::"+e.getLproductRemoved(),sum+"");
             }else{
                 int sum  = -e.getLproductQuantity();
-                saveMap.put(fieldPrefix+"qty::"+e.getLproductRemoved(),sum+"");
+                saveMap.put("prod::"+e.getLproductRemoved(),sum+"");
             }
         }
         if(null!= e.getRproductRemoved() && !e.getRproductRemoved().isEmpty()){
-            if(saveMap.containsKey(fieldPrefix+"qty::"+e.getRproductRemoved())) {
-                int qty = Integer.parseInt(saveMap.remove(fieldPrefix+"qty::"+e.getRproductRemoved()));
+            if(saveMap.containsKey("prod::"+e.getRproductRemoved())) {
+                int qty = Integer.parseInt(saveMap.remove("prod::"+e.getRproductRemoved()));
                 int sum = qty-e.getRproductQuantity();
-                saveMap.put(fieldPrefix+"qty::",sum+"");
+                saveMap.put("prod::"+e.getRproductRemoved(),sum+"");
             }else{
-                int sum = -e.getRproductQuantity();
-                saveMap.put(fieldPrefix+"qty::"+e.getRproductRemoved(),sum+"");
+                int sum  = -e.getRproductQuantity();
+                saveMap.put("prod::"+e.getRproductRemoved(),sum+"");
             }
         }
     }

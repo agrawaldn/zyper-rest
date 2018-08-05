@@ -136,14 +136,16 @@ public class Order {
         ret.append(" Customer ID: "+getCustomerId());
         ret.append(" Status: "+getStatus());
         this.getOrderItems().forEach(item->{
-            ret.append(" Product: "+item.getProductDesc()+" Quantity: "+item.getQuantity());
+            ret.append(" prod: "+item.getProductDesc()+" qty: "+item.getQuantity());
         });
         this.getOrderEvents().forEach(event->{
-            ret.append("move: "+event.getMovements()+" lshelf: "+event.getLshelf()+" rshelf: "
-                    +event.getRshelf()+" lprod+: "+event.getLproductAdded()+" rprod+: "
-                    +event.getRproductAdded()+" lprod-: "+event.getLproductRemoved()+" rprod-: "
-                    +event.getRproductRemoved()+" lqty: "+event.getLproductQuantity()+"rqty"
-                    +event.getRproductQuantity());
+            ret.append("ts: ").append(event.getOrigTS()).append(" cam: ").append(event.getCamera());
+            ret.append(" move: ").append(event.getMovements()).append(" lshelf: ").append(event.getLshelf())
+                    .append(" rshelf: ").append(event.getRshelf()).append(" lprod+: ")
+                    .append(event.getLproductAdded()).append(" rprod+: ").append(event.getRproductAdded())
+                    .append(" lprod-: ").append(event.getLproductRemoved()).append(" rprod-: ")
+                    .append(event.getRproductRemoved()).append(" lqty: ").append(event.getLproductQuantity())
+                    .append("rqty:").append(event.getRproductQuantity());
         });
         return ret.toString();
     }

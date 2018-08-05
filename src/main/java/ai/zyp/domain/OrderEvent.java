@@ -24,6 +24,7 @@ public class OrderEvent {
     int rproductQuantity;
     String lshelf;
     String rshelf;
+    String origTS;
 
     public String getCamera() {
         return camera;
@@ -113,17 +114,25 @@ public class OrderEvent {
         this.rshelf = rshelf;
     }
 
-    public String getEpochTimestamp(){
-        if(timestamp == null) return null;
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat(AppProperties.getInstance().getDateTimeFormat());
-            Date dt = sdf.parse(timestamp);
-            long epoch = dt.getTime();
-            return String.valueOf(epoch);
-        } catch(ParseException e) {
-            return null;
-        }
+    public String getOrigTS() {
+        return origTS;
     }
+
+    public void setOrigTS(String origTS) {
+        this.origTS = origTS;
+    }
+
+    //    public String getEpochTimestamp(){
+//        if(timestamp == null) return null;
+//        try {
+//            SimpleDateFormat sdf = new SimpleDateFormat(AppProperties.getInstance().getDateTimeFormat());
+//            Date dt = sdf.parse(timestamp);
+//            long epoch = dt.getTime();
+//            return String.valueOf(epoch);
+//        } catch(ParseException e) {
+//            return null;
+//        }
+//    }
 
 
 }

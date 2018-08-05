@@ -18,6 +18,8 @@ import static org.junit.Assert.assertTrue;
 @SpringBootTest(classes = Application.class)
 public class RedisTest {
 
+    private Redis db = new Redis();
+
     @Test
     public void zrangeByScoreTest(){
         Redis redis = new Redis();
